@@ -1,0 +1,80 @@
+
+
+#######################################################################
+#Octopus Configuration########
+#############################
+
+$i=0
+$installed=$false
+
+Do
+{
+
+If (!(Test-Path 'C:\Program Files\Octopus Deploy\Tentacle\tentacle.exe'))
+{
+#Wait for another 30 seconds until installation completes
+Start-Sleep 30
+Write-Output "Tentacle install not complete yet.  Waiting 30 seconds"
+$i++
+}Else
+{
+# Configure tentacle
+
+# GET AWS METADATA-REQUIRED FOR CONNECTIVITY
+
+write-host "Read meta-data"
+$webClient = new-object Net.WebClient
+$publicHostName = $webClient.DownloadString("http://169.254.169.254/latest/meta-data/public-hostname")
+$instanceId = $webClient.DownloadString("http://169.254.169.254/latest/meta-data/instance-id")
+#$tags = (Get-EC2Instance $instanceId).RunningInstance.Tag
+
+
+
+cd 'C:\Program Files\Octopus Deploy\Tentacle'
+
+./Tentacle.exe create-instance --instance=$instanceId --config 'C:\Octopus\Tentacle\Tentacle.config'
+./Tentacle.exe new-certificate --instance=$instanceId --if-blank
+./Tentacle.exe new-squid --instance=$instanceId
+./Tentacle.exe configure --instance=$instanceId --reset-trust
+./Tentacle.exe configure --instance=$instanceId --home 'C:\Octopus' --app 'C:\Octopus\Applications' --port '10933' --noListen 'False'
+./Tentacle.exe configure --instance=$instanceId --trust 'F8AA5ADD835B7AF5FEA2477E3FD137BE20346E9F'
+./Tentacle.exe register-with --name=$instanceId --instance=$instanceId --server 'https://itgdtd-octopus.impact-tech.com' --role 'web' --environment 'ITGDTD Dev' --apiKey='API-M2HK9FPFGRABWJHWLNFXZY4MKTY' --publicHostname=$publicHostName --comms-style TentaclePassive --console
+netsh advfirewall firewall add rule 'name=Octopus Deploy Tentacle' dir=in action=allow protocol=TCP localport=10933
+./Tentacle.exe service --instance=$instanceId --install --start
+$installed = $true
+}
+}
+While ($i -lt 5 -and $installed -ne $true)
+#####################################################################################
+##Pull down latest build from Octopus
+##########################################################################
+
+
+$octopusThumbPrint = "B6D67125348C927DB755182B9AC769C942A2843F"
+$octopusServer = "https://itgdtd-octopus.impact-tech.com"
+$octopusAPIKey = "API-M2HK9FPFGRABWJHWLNFXZY4MKTY"
+$octopusProject = "Test Deploy"
+
+
+#$scriptDir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+
+#$environment = ($tags | ?{$_.key -eq "Environment"}).Value
+$environment = "ITGDTD Dev"
+$role = ($tags | ?{$_.key -eq "Role"}).Value
+$release = (Octo list-latestdeployments --project="Test Deploy" --server=$octopusServer --apikey=$octopusAPIKey --environment=$environment | {$_.contains("  Version:") } | select-object -first 1 )
+write-host "Get latest release for project $octopusProject and environment $environment"
+
+
+If (!$release) 
+{
+ write-warning "Current release for $octopusProject not found"
+ return
+}  
+Else
+{
+Write-Host "Current release for project $Octopusproject is $release"
+}
+
+write-host "Pull current release $release"
+$release = $release -replace "\s+Version:\s+", ""
+Octo deploy-release --project="$octopusProject" --server=$octopusServer --apiKey=$octopusAPIKey --releaseNumber=$release --specificmachines="$instanceId" --deployto=$environment --waitfordeployment --deploymenttimeout="01:00:00"
