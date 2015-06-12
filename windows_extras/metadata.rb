@@ -1,4 +1,3 @@
-name 'windows_extras'
 maintainer       "Doug MacEachern"
 maintainer_email "dougm@vmware.com"
 license          "Apache 2.0"

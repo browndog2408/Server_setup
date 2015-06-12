@@ -1,12 +1,7 @@
 Description
 ===========
 
-Creates a configured handler path for distributing [Chef report and exception handlers](http://docs.chef.io/handlers.html).  Also exposes an LWRP for enabling Chef handlers from within recipe code (as opposed to hard coding in the client.rb file).  This is useful for cookbook authors who may want to ship a product specific handler (see the `cloudkick` cookbook for an example) with their cookbook.
-
-Requirements
-============
-
-* Ruby >= 1.9
+Creates a configured handler path for distributing [Chef report and exception handlers](http://wiki.opscode.com/display/chef/Exception+and+Report+Handlers).  Also exposes an LWRP for enabling Chef handlers from within recipe code (as opposed to hard coding in the client.rb file).  This is useful for cookbook authors who may want to ship a product specific handler (see the `cloudkick` cookbook for an example) with their cookbook.
 
 Attributes
 ==========
@@ -33,45 +28,43 @@ It is best to declare `chef_handler` resources early on in the compile phase so 
 - class_name: name attribute. The name of the handler class (can be module name-spaced).
 - source: full path to the handler file.  can also be a gem path if the handler ships as part of a Ruby gem.
 - arguments: an array of arguments to pass the handler's class initializer
-- supports: type of Chef Handler to register as, i.e. :report, :exception or both. default is `:report => true, :exception => true`
+- supports: type of Chef Handler to register as, ie :report, :exception or both. default is `:report => true, :exception => true`
 
 ### Example
-
-```ruby
-    # register the Chef::Handler::JsonFile handler
+    
+    # register the Chef::Handler::JsonFile handler 
     # that ships with the Chef gem
     chef_handler "Chef::Handler::JsonFile" do
       source "chef/handler/json_file"
       arguments :path => '/var/chef/reports'
       action :enable
     end
-
+    
     # do the same but during the compile phase
     chef_handler "Chef::Handler::JsonFile" do
       source "chef/handler/json_file"
       arguments :path => '/var/chef/reports'
       action :nothing
     end.run_action(:enable)
-
+    
     # handle exceptions only
     chef_handler "Chef::Handler::JsonFile" do
       source "chef/handler/json_file"
       arguments :path => '/var/chef/reports'
-      supports :exception => true
+      supports exception => true
       action :enable
     end
-
-
-    # enable the CloudkickHandler which was
+    
+    
+    # enable the CloudkickHandler which was 
     # dropped off in the default handler path.
-    # passes the oauth key/secret to the handler's
+    # passes the oauth key/secret to the handler's 
     # intializer.
     chef_handler "CloudkickHandler" do
       source "#{node['chef_handler']['handler_path']}/cloudkick_handler.rb"
       arguments [node['cloudkick']['oauth_key'], node['cloudkick']['oauth_secret']]
       action :enable
     end
-```
 
 
 Usage
@@ -83,35 +76,31 @@ default
 Put the recipe `chef_handler` at the start of the node's run list to make sure that custom handlers are dropped off early on in the Chef run and available for later recipes.
 
 For information on how to write report and exception handlers for Chef, please see the Chef wiki pages:
-http://wiki.chef.io/display/chef/Exception+and+Report+Handlers
+http://wiki.opscode.com/display/chef/Exception+and+Report+Handlers
 
 json_file
 ---------
 
 Leverages the `chef_handler` LWRP to automatically register the `Chef::Handler::JsonFile` handler that ships as part of Chef. This handler serializes the run status data to a JSON file located at `/var/chef/reports`.
 
+Changes/Roadmap
+===============
 
-Unit Testing
-==================
+## 1.0.4
 
-chef_handler provides built in [chefspec](https://github.com/sethvargo/chefspec) matchers for assisting unit tests. These matchers will only be loaded if chefspec is already loaded. Following is an example of asserting against the jsonfile handler:
+* [COOK-654] dont try and access a class before it has been loaded
+* fix bad boolean check (if vs unless)
 
+## 1.0.2:
 
-```ruby
-  expect(runner).to enable_chef_handler("Chef::Handler::JsonFile").with(
-    source: "chef/handler/json_file",
-    arguments: { :path => '/var/chef/reports'},
-    supports: {:exception => true}
-    )
-  end
-```
+* [COOK-620] ensure handler code is reloaded during daemonized chef runs
 
 License and Author
 ==================
 
-Author:: Seth Chisamore (<schisamo@chef.io>)
+Author:: Seth Chisamore (<schisamo@opscode.com>)
 
-Copyright:: 2011, Chef Software, Inc
+Copyright:: 2011, Opscode, Inc
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
