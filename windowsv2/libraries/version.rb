@@ -141,6 +141,7 @@ module Windows
 
     WIN_VERSIONS = {
       "Windows 7" => {:major => 6, :minor => 1, :callable => lambda{ @product_type == VER_NT_WORKSTATION }},
+	  "Windows Server 2012 R2" => {:major => 6, :minor => 3, :callable => lambda{ @product_type == VER_NT_WORKSTATION }},
       "Windows Server 2008 R2" => {:major => 6, :minor => 1, :callable => lambda{ @product_type != VER_NT_WORKSTATION }},
       "Windows Server 2008" => {:major => 6, :minor => 0, :callable => lambda{ @product_type != VER_NT_WORKSTATION }},
       "Windows Vista" => {:major => 6, :minor => 0, :callable => lambda{ @product_type == VER_NT_WORKSTATION }},
