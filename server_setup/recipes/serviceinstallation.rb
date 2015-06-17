@@ -430,13 +430,6 @@ powershell_script 'BITS-Compact-Server' do
   not_if "(Get-WindowsFeature -Name BITS-Compact-Server).Installed"
 end
 
-powershell_script 'BITS-Compact-Server' do
-  code 'Add-WindowsFeature BITS-Compact-Server'
-  guard_interpreter :powershell_script
-  not_if "(Get-WindowsFeature -Name BITS-Compact-Server).Installed"
-end
-
-
 
 
 
