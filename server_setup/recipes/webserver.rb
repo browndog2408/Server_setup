@@ -55,3 +55,7 @@ not_if "(Test-Path $chocolateyBin) -eq $false"
 
 end
 
+reboot "now" do
+  action :reboot_now
+end
+
