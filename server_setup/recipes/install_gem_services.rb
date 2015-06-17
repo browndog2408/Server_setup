@@ -1,3 +1,5 @@
+Chef::Config[:chef_gem_compile_time]
+
 powershell_script 'Install_Gem_Services' do
   code <<-EOH
      cd "C:\\opscode\\chef\\embedded\\bin"
@@ -5,5 +7,5 @@ powershell_script 'Install_Gem_Services' do
 	 ./gem install rdp-ruby-wmi
   EOH
   guard_interpreter :powershell_script
-  compile_time false
+  
 end
