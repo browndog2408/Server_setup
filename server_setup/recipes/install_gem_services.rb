@@ -5,4 +5,5 @@ powershell_script 'Install_Gem_Services' do
 	 ./gem install rdp-ruby-wmi
   EOH
   guard_interpreter :powershell_script
+  compile_time false
 end
